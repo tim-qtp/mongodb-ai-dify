@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB-瀚高-查询工具 故障跟踪记录下载</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+            min-height: 100px;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .example {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .example h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .example ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .example li {
+            margin-bottom: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .example-btn {
+            background-color: #6c757d;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .example-btn:hover {
+            background-color: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 MongoDB查询工具</h1>
+        
+        <div class="example">
+            <h3>📝 使用说明</h3>
+            <ul>
+                <li>在文本框中输入MongoDB查询语句</li>
+                <li>支持常见的查询操作，如count()、find()等</li>
+                <li>点击"执行查询"按钮执行语句</li>
+                <li>结果将以JSON格式返回</li>
+            </ul>
+            <h4>示例查询语句:</h4>
+            <ul>
+                <li>db.alarm_info.count() <button class="example-btn" onclick="setExample('db.alarm_info.count()')">使用</button></li>
+                <li>db.alarm_info.find() <button class="example-btn" onclick="setExample('db.alarm_info.find()')">使用</button></li>
+                <li>db.alarm_info.find({}) <button class="example-btn" onclick="setExample('db.alarm_info.find({})')">使用</button></li>
+                <li>db.alarm_info.find({status: 'active'}) <button class="example-btn" onclick="setExample('db.alarm_info.find({status: &quot;active&quot;})')">使用</button></li>
+            </ul>
+        </div>
+
+        <div class="form-group">
+            <label for="queryStatement">MongoDB查询语句:</label>
+            <textarea id="queryStatement" placeholder="例如: db.alarm_info.count()"></textarea>
+        </div>
+
+        <div class="form-group">
+            <button onclick="executeQuery()">执行查询</button>
+            <button onclick="clearResult()">清空结果</button>
+        </div>
+
+
+
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/mongo';
+
+        async function executeQuery() {
+            const query = document.getElementById('queryStatement').value.trim();
+            if (!query) {
+                showError('请输入查询语句');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/query/raw`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                    body: query
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+                handleResponse(data);
+            } catch (error) {
+                showError('请求失败: ' + error.message);
+            }
+        }
+
+        function handleResponse(data) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            
+            if (data.success) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '查询成功:\n\n' + data.result;
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '查询失败:\n\n' + data.message;
+            }
+        }
+
+        function showLoading() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在执行查询...';
+        }
+
+        function showError(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result error';
+            resultDiv.textContent = message;
+        }
+
+        function clearResult() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'none';
+            document.getElementById('queryStatement').value = '';
+        }
+
+        function setExample(example) {
+            document.getElementById('queryStatement').value = example;
+        }
+
+        // Ctrl+Enter 执行查询
+        document.getElementById('queryStatement').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                executeQuery();
+            }
+        });
+    </script>
+</body>
+</html> 

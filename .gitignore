@@ -1,0 +1,51 @@
+# 项目文档
+HELP.md
+数据库操作流程文档.md
+
+# Maven
+/target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# 构建输出
+/build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# 日志文件
+*.log
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# IDE配置
+.idea/
+*.iws
+*.iml
+*.ipr
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.sts4-cache
+
+# VS Code
+.vscode/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# 其他临时文件
+*.swp
+*.swo
+*~
+
+### STS ###
+.apt_generated
