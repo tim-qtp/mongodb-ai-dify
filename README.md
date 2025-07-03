@@ -81,12 +81,21 @@ db.alarm_info.count()
 
 数据库连接配置在 `application.properties` 中：
 
+### 无认证连接（默认）
 ```properties
-spring.data.mongodb.host=121.5.162.199
+spring.data.mongodb.host=127.0.0.1
 spring.data.mongodb.port=27017
 spring.data.mongodb.database=detect
-spring.data.mongodb.username=root
-spring.data.mongodb.password=123.com
+```
+
+### 认证连接（可选）
+如果需要用户名密码认证，请取消注释并填写正确的凭据：
+```properties
+spring.data.mongodb.host=127.0.0.1
+spring.data.mongodb.port=27017
+spring.data.mongodb.database=detect
+spring.data.mongodb.username=your_username
+spring.data.mongodb.password=your_password
 spring.data.mongodb.authentication-database=admin
 ```
 

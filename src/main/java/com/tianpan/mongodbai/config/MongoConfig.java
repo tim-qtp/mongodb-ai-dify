@@ -19,16 +19,26 @@ public class MongoConfig {
     @Value("${spring.data.mongodb.database}")
     private String database;
 
-    @Value("${spring.data.mongodb.username}")
+    @Value("${spring.data.mongodb.username:}")
     private String username;
 
-    @Value("${spring.data.mongodb.password}")
+    @Value("${spring.data.mongodb.password:}")
     private String password;
 
     @Bean
     public MongoClient mongoClient() {
-        String connectionString = String.format("mongodb://%s:%s@%s:%d/%s?authSource=admin",
-                username, password, host, port, database);
+        String connectionString;
+        
+        // 如果用户名和密码为空，使用无认证连接
+        if (username == null || username.trim().isEmpty() || 
+            password == null || password.trim().isEmpty()) {
+            connectionString = String.format("mongodb://%s:%d/%s", host, port, database);
+        } else {
+            // 使用认证连接
+            connectionString = String.format("mongodb://%s:%s@%s:%d/%s?authSource=admin",
+                    username, password, host, port, database);
+        }
+        
         return MongoClients.create(connectionString);
     }
 
